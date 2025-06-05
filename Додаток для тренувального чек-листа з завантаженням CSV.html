@@ -1,0 +1,924 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренувальний Чек-лист</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .workout-tab.active {
+            @apply bg-blue-600 text-white;
+        }
+        .workout-day {
+            display: none;
+        }
+        .workout-day.active {
+            display: block;
+        }
+        .history-item {
+            transition: all 0.2s ease;
+        }
+        .history-item:hover {
+            transform: translateX(4px);
+        }
+        .file-upload {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .file-upload:hover {
+            border-color: #3b82f6;
+            background-color: #f8fafc;
+        }
+        .file-upload.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Тренувальний Чек-лист</h1>
+            <p class="text-gray-600">Відстежуйте свій прогрес та нічого не забувайте!</p>
+        </div>
+
+        <!-- Program Management -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">📁 Управління програмою тренувань</h2>
+            
+            <!-- File Upload Area -->
+            <div class="file-upload rounded-lg p-6 text-center mb-4" id="fileUpload">
+                <div class="space-y-3">
+                    <div class="text-4xl">📄</div>
+                    <div>
+                        <p class="text-gray-700 font-medium">Завантажте CSV файл з програмою тренувань</p>
+                        <p class="text-gray-500 text-sm">Перетягніть файл сюди або натисніть для вибору</p>
+                    </div>
+                    <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                    <button onclick="document.getElementById('csvFileInput').click()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Вибрати файл
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Control Buttons -->
+            <div class="flex flex-wrap gap-2 justify-center">
+                <button onclick="downloadDefaultCSV()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                    📥 Завантажити приклад CSV
+                </button>
+                <button onclick="loadDefaultProgram()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                    🔄 Стандартна програма
+                </button>
+                <button onclick="clearProgram()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    🗑️ Очистити програму
+                </button>
+            </div>
+        </div>
+
+        <!-- Pre-workout reminders -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6" id="preWorkoutSection">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">🔥 Загальні нагадування перед кожним тренуванням:</h2>
+            <div class="space-y-2" id="preWorkoutReminders">
+                <!-- Will be populated dynamically -->
+            </div>
+        </div>
+
+        <!-- Workout tabs -->
+        <div class="flex flex-wrap justify-center mb-6" id="workoutTabs">
+            <!-- Will be populated dynamically -->
+        </div>
+
+        <!-- Workout content -->
+        <div id="workoutContent">
+            <!-- Will be populated dynamically -->
+        </div>
+
+        <!-- Post-workout reminders -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6" id="postWorkoutSection">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">📝 Нагадування після кожного тренування:</h2>
+            <div class="space-y-2" id="postWorkoutReminders">
+                <!-- Will be populated dynamically -->
+            </div>
+        </div>
+
+        <!-- Progress tracking with date -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-4 gap-4">
+                <h2 class="text-xl font-semibold text-gray-800">📊 Збереження тренування</h2>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input type="date" id="workoutDate" class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <div class="flex gap-2">
+                        <button onclick="saveWorkout()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            💾 Зберегти
+                        </button>
+                        <button onclick="loadWorkout()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            📂 Завантажити
+                        </button>
+                        <button onclick="showHistory()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                            📈 Історія
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <p class="text-gray-600 text-sm">
+                Виберіть дату тренування та збережіть свій прогрес. Кожне тренування зберігається окремо за датою.
+            </p>
+        </div>
+
+        <!-- History Modal -->
+        <div id="historyModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                    <div class="flex justify-between items-center p-6 border-b">
+                        <h2 class="text-2xl font-bold text-gray-800">📈 Історія тренувань</h2>
+                        <button onclick="closeHistory()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                    </div>
+                    <div class="p-6 overflow-y-auto max-h-[70vh]">
+                        <div id="historyContent" class="space-y-4">
+                            <!-- History content will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-gray-500">
+            <p>💪 Успіхів у тренуваннях! Будьте послідовними та досягайте своїх цілей!</p>
+        </div>
+    </div>
+
+    <script>
+        let currentProgram = null;
+        let currentActiveDay = 1;
+
+        // Set today's date as default
+        document.getElementById('workoutDate').valueAsDate = new Date();
+
+        // Default workout program data
+        const defaultProgram = {
+            preWorkout: [
+                "Розминка (5-10 хвилин): Легке кардіо на степері (3-5 хвилин), динамічна розтяжка",
+                "Підготувати воду",
+                "Налаштуватися на продуктивне тренування!"
+            ],
+            postWorkout: [
+                "Ретельно розтягнути всі основні групи м'язів",
+                "Поповнити водний баланс",
+                "Забезпечити якісне харчування для відновлення"
+            ],
+            days: [
+                {
+                    name: "День 1: Тягові рухи та ноги",
+                    exercises: [
+                        {
+                            name: "Підтягування на турніку (широким хватом до грудей)",
+                            sets: 3,
+                            type: "reps"
+                        },
+                        {
+                            name: "Підтягування на турніку (зворотним хватом)",
+                            sets: 3,
+                            type: "reps"
+                        },
+                        {
+                            name: "Присідання класичні",
+                            sets: 3,
+                            type: "reps",
+                            recommended: "10-15"
+                        },
+                        {
+                            name: "Випади (по черзі на кожну ногу)",
+                            sets: 3,
+                            type: "reps",
+                            recommended: "10-12 на ногу"
+                        },
+                        {
+                            name: "Віджимання від підлоги класичні",
+                            sets: 3,
+                            type: "reps"
+                        },
+                        {
+                            name: "Підйоми ніг у висі на турніку",
+                            sets: 3,
+                            type: "reps",
+                            recommended: "10-15"
+                        },
+                        {
+                            name: "Степер (помірний темп) - 10-15 хвилин",
+                            type: "checkbox"
+                        },
+                        {
+                            name: "Заминка та розтяжка (10-15 хвилин)",
+                            type: "checkbox"
+                        }
+                    ]
+                },
+                {
+                    name: "День 2: Жимові рухи та вибухова сила",
+                    exercises: [
+                        {
+                            name: "Віджимання на брусах",
+                            sets: 3,
+                            type: "reps"
+                        },
+                        {
+                            name: "Австралійські підтягування",
+                            sets: 3,
+                            type: "reps"
+                        },
+                        {
+                            name: "Застрибування на степер/платформу",
+                            sets: 3,
+                            type: "reps",
+                            recommended: "8-12"
+                        },
+                        {
+                            name: "Віджимання з вузькою постановкою рук (алмазні)",
+                            sets: 3,
+                            type: "reps"
+                        },
+                        {
+                            name: "Планка класична",
+                            sets: 3,
+                            type: "time",
+                            recommended: "30-60 сек"
+                        },
+                        {
+                            name: "Планка бокова (ліва сторона)",
+                            sets: 3,
+                            type: "time",
+                            recommended: "30 сек"
+                        },
+                        {
+                            name: "Планка бокова (права сторона)",
+                            sets: 3,
+                            type: "time",
+                            recommended: "30 сек"
+                        },
+                        {
+                            name: "Заминка та розтяжка (10-15 хвилин)",
+                            type: "checkbox"
+                        }
+                    ]
+                },
+                {
+                    name: "День 3: Комбіноване тренування",
+                    exercises: [
+                        {
+                            name: "Кругове тренування - Коло 1",
+                            type: "circuit",
+                            circuits: [
+                                { name: "Підтягування", type: "reps", recommended: "5-8" },
+                                { name: "Віджимання від підлоги", type: "reps", recommended: "10-15" },
+                                { name: "Присідання \"повітряні\"", type: "reps", recommended: "15-20" },
+                                { name: "\"Скелелаз\" (альпініст)", type: "time", recommended: "20-30 сек" },
+                                { name: "Підйоми колін до грудей", type: "reps", recommended: "15-20" }
+                            ]
+                        },
+                        {
+                            name: "Кругове тренування - Коло 2",
+                            type: "circuit",
+                            circuits: [
+                                { name: "Підтягування", type: "reps" },
+                                { name: "Віджимання", type: "reps" },
+                                { name: "Присідання", type: "reps" },
+                                { name: "\"Скелелаз\"", type: "time" },
+                                { name: "Підйоми колін", type: "reps" }
+                            ]
+                        },
+                        {
+                            name: "Кругове тренування - Коло 3",
+                            type: "circuit",
+                            circuits: [
+                                { name: "Підтягування", type: "reps" },
+                                { name: "Віджимання", type: "reps" },
+                                { name: "Присідання", type: "reps" },
+                                { name: "\"Скелелаз\"", type: "time" },
+                                { name: "Підйоми колін", type: "reps" }
+                            ]
+                        },
+                        {
+                            name: "Кругове тренування - Коло 4 (опціонально)",
+                            type: "circuit",
+                            circuits: [
+                                { name: "Підтягування", type: "reps" },
+                                { name: "Віджимання", type: "reps" },
+                                { name: "Присідання", type: "reps" },
+                                { name: "\"Скелелаз\"", type: "time" },
+                                { name: "Підйоми колін", type: "reps" }
+                            ]
+                        },
+                        {
+                            name: "Степер інтервальне тренування",
+                            type: "intervals",
+                            intervals: [
+                                "Інтервал 1: 2 хв швидко / 1 хв повільно",
+                                "Інтервал 2: 2 хв швидко / 1 хв повільно",
+                                "Інтервал 3: 2 хв швидко / 1 хв повільно",
+                                "Інтервал 4: 2 хв швидко / 1 хв повільно",
+                                "Інтервал 5 (якщо виконуєте): 2 хв швидко / 1 хв повільно"
+                            ]
+                        },
+                        {
+                            name: "Скручування",
+                            sets: 3,
+                            type: "reps",
+                            recommended: "15-20"
+                        },
+                        {
+                            name: "Зворотні скручування",
+                            sets: 3,
+                            type: "reps",
+                            recommended: "15-20"
+                        },
+                        {
+                            name: "\"Велосипед\"",
+                            sets: 3,
+                            type: "time",
+                            recommended: "20-30 сек"
+                        },
+                        {
+                            name: "Заминка та розтяжка (10-15 хвилин)",
+                            type: "checkbox"
+                        }
+                    ]
+                }
+            ]
+        };
+
+        // File upload functionality
+        document.getElementById('csvFileInput').addEventListener('change', handleFileSelect);
+        
+        const fileUpload = document.getElementById('fileUpload');
+        fileUpload.addEventListener('click', () => document.getElementById('csvFileInput').click());
+        fileUpload.addEventListener('dragover', handleDragOver);
+        fileUpload.addEventListener('drop', handleFileDrop);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            fileUpload.classList.add('dragover');
+        }
+
+        function handleFileDrop(e) {
+            e.preventDefault();
+            fileUpload.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processCSVFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processCSVFile(file);
+            }
+        }
+
+        function processCSVFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const program = parseCSV(csv);
+                    currentProgram = program;
+                    generateWorkoutProgram(program);
+                    alert('✅ Програма тренувань успішно завантажена!');
+                } catch (error) {
+                    alert('❌ Помилка при обробці CSV файлу: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(csv) {
+            const lines = csv.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            
+            const program = {
+                preWorkout: [],
+                postWorkout: [],
+                days: {}
+            };
+
+            for (let i = 1; i < lines.length; i++) {
+                const row = parseCSVRow(lines[i]);
+                if (row.length < headers.length) continue;
+
+                const data = {};
+                headers.forEach((header, index) => {
+                    data[header] = row[index] || '';
+                });
+
+                if (data.section === 'pre_workout') {
+                    program.preWorkout.push(data.exercise_name);
+                } else if (data.section === 'post_workout') {
+                    program.postWorkout.push(data.exercise_name);
+                } else if (data.section === 'workout') {
+                    const dayKey = data.day || 'day1';
+                    if (!program.days[dayKey]) {
+                        program.days[dayKey] = {
+                            name: data.day_name || `Day ${dayKey.replace('day', '')}`,
+                            exercises: []
+                        };
+                    }
+
+                    const exercise = {
+                        name: data.exercise_name,
+                        type: data.exercise_type || 'reps'
+                    };
+
+                    if (data.sets && parseInt(data.sets) > 0) {
+                        exercise.sets = parseInt(data.sets);
+                    }
+
+                    if (data.recommended) {
+                        exercise.recommended = data.recommended;
+                    }
+
+                    if (data.exercise_type === 'circuit' && data.circuit_exercises) {
+                        exercise.circuits = data.circuit_exercises.split('|').map(ex => {
+                            const [name, type, rec] = ex.split(':');
+                            return {
+                                name: name.trim(),
+                                type: type ? type.trim() : 'reps',
+                                recommended: rec ? rec.trim() : ''
+                            };
+                        });
+                    }
+
+                    if (data.exercise_type === 'intervals' && data.interval_list) {
+                        exercise.intervals = data.interval_list.split('|');
+                    }
+
+                    program.days[dayKey].exercises.push(exercise);
+                }
+            }
+
+            // Convert days object to array
+            program.days = Object.values(program.days);
+
+            return program;
+        }
+
+        function parseCSVRow(row) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < row.length; i++) {
+                const char = row[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            
+            return result;
+        }
+
+        function generateWorkoutProgram(program) {
+            // Generate pre-workout reminders
+            const preWorkoutDiv = document.getElementById('preWorkoutReminders');
+            preWorkoutDiv.innerHTML = program.preWorkout.map(reminder => `
+                <label class="flex items-center space-x-3">
+                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                    <span class="text-gray-700"><strong>${reminder}</strong></span>
+                </label>
+            `).join('');
+
+            // Generate post-workout reminders
+            const postWorkoutDiv = document.getElementById('postWorkoutReminders');
+            postWorkoutDiv.innerHTML = program.postWorkout.map(reminder => `
+                <label class="flex items-center space-x-3">
+                    <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                    <span class="text-gray-700"><strong>${reminder}</strong></span>
+                </label>
+            `).join('');
+
+            // Generate workout tabs
+            const tabsDiv = document.getElementById('workoutTabs');
+            tabsDiv.innerHTML = program.days.map((day, index) => `
+                <button class="workout-tab px-6 py-3 mr-2 mb-2 bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors ${index === 0 ? 'active' : ''}" 
+                        onclick="showWorkout(${index + 1})">
+                    ${day.name}
+                </button>
+            `).join('');
+
+            // Generate workout content
+            const contentDiv = document.getElementById('workoutContent');
+            contentDiv.innerHTML = program.days.map((day, dayIndex) => `
+                <div id="day${dayIndex + 1}" class="workout-day ${dayIndex === 0 ? 'active' : ''}">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">${day.name}</h2>
+                        ${generateExercises(day.exercises)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateExercises(exercises) {
+            return exercises.map((exercise, index) => {
+                const exerciseNumber = index + 1;
+                
+                if (exercise.type === 'checkbox') {
+                    return `
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <label class="flex items-center space-x-3">
+                                <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                                <span class="text-gray-700">${exercise.name}</span>
+                            </label>
+                        </div>
+                    `;
+                } else if (exercise.type === 'circuit') {
+                    return `
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">${exerciseNumber}. ${exercise.name}</h3>
+                            <div class="p-3 bg-white rounded border">
+                                <div class="space-y-2 text-sm">
+                                    ${exercise.circuits.map(circuit => `
+                                        <div class="flex items-center space-x-2">
+                                            <input type="checkbox" class="w-4 h-4 text-blue-600 rounded">
+                                            <span>${circuit.name}:</span>
+                                            <input type="number" class="w-12 px-1 py-1 border rounded text-center text-xs" placeholder="0">
+                                            <span>${circuit.type === 'time' ? 'сек' : 'повт.'} ${circuit.recommended ? `(${circuit.recommended})` : ''}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (exercise.type === 'intervals') {
+                    return `
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">${exerciseNumber}. ${exercise.name}</h3>
+                            <div class="space-y-2">
+                                ${exercise.intervals.map(interval => `
+                                    <label class="flex items-center space-x-3">
+                                        <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                                        <span class="text-gray-700">${interval}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Regular exercise with sets
+                    const sets = exercise.sets || 3;
+                    const recommended = exercise.recommended ? ` (${exercise.recommended})` : '';
+                    const unit = exercise.type === 'time' ? 'секунд' : 'повторень';
+                    
+                    return `
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">${exerciseNumber}. ${exercise.name}</h3>
+                            <div class="space-y-2">
+                                ${Array.from({length: sets}, (_, setIndex) => `
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" class="w-5 h-5 text-blue-600 rounded">
+                                        <span class="text-gray-700">Підхід ${setIndex + 1}:</span>
+                                        <input type="number" class="w-16 px-2 py-1 border rounded text-center" placeholder="0">
+                                        <span class="text-gray-700">${unit}${recommended}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function downloadDefaultCSV() {
+            const csvContent = generateCSVFromProgram(defaultProgram);
+            downloadCSV(csvContent, 'workout_program.csv');
+        }
+
+        function generateCSVFromProgram(program) {
+            let csv = 'section,day,day_name,exercise_name,exercise_type,sets,recommended,circuit_exercises,interval_list\n';
+            
+            // Pre-workout
+            program.preWorkout.forEach(reminder => {
+                csv += `pre_workout,,,,"${reminder}",checkbox,,,,\n`;
+            });
+            
+            // Post-workout
+            program.postWorkout.forEach(reminder => {
+                csv += `post_workout,,,,"${reminder}",checkbox,,,,\n`;
+            });
+            
+            // Workouts
+            program.days.forEach((day, dayIndex) => {
+                const dayKey = `day${dayIndex + 1}`;
+                day.exercises.forEach(exercise => {
+                    let circuitExercises = '';
+                    let intervalList = '';
+                    
+                    if (exercise.circuits) {
+                        circuitExercises = exercise.circuits.map(c => 
+                            `${c.name}:${c.type}:${c.recommended || ''}`
+                        ).join('|');
+                    }
+                    
+                    if (exercise.intervals) {
+                        intervalList = exercise.intervals.join('|');
+                    }
+                    
+                    csv += `workout,${dayKey},"${day.name}","${exercise.name}",${exercise.type},${exercise.sets || ''},"${exercise.recommended || ''}","${circuitExercises}","${intervalList}"\n`;
+                });
+            });
+            
+            return csv;
+        }
+
+        function downloadCSV(content, filename) {
+            const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function loadDefaultProgram() {
+            currentProgram = defaultProgram;
+            generateWorkoutProgram(defaultProgram);
+            alert('✅ Стандартна програма завантажена!');
+        }
+
+        function clearProgram() {
+            if (confirm('Ви впевнені, що хочете очистити поточну програму?')) {
+                document.getElementById('preWorkoutReminders').innerHTML = '';
+                document.getElementById('postWorkoutReminders').innerHTML = '';
+                document.getElementById('workoutTabs').innerHTML = '';
+                document.getElementById('workoutContent').innerHTML = '';
+                currentProgram = null;
+                alert('🗑️ Програма очищена!');
+            }
+        }
+
+        function showWorkout(day) {
+            // Hide all workout days
+            document.querySelectorAll('.workout-day').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.workout-tab').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show selected workout day
+            const dayElement = document.getElementById('day' + day);
+            if (dayElement) {
+                dayElement.classList.add('active');
+            }
+            
+            // Add active class to selected tab
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
+            currentActiveDay = day;
+        }
+
+        function getWorkoutData() {
+            const data = {};
+            
+            // Save all checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach((checkbox, index) => {
+                data[`checkbox_${index}`] = checkbox.checked;
+            });
+            
+            // Save all number inputs
+            document.querySelectorAll('input[type="number"]').forEach((input, index) => {
+                data[`number_${index}`] = input.value;
+            });
+            
+            return data;
+        }
+
+        function setWorkoutData(data) {
+            // Load checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach((checkbox, index) => {
+                if (data[`checkbox_${index}`] !== undefined) {
+                    checkbox.checked = data[`checkbox_${index}`];
+                }
+            });
+            
+            // Load number inputs
+            document.querySelectorAll('input[type="number"]').forEach((input, index) => {
+                if (data[`number_${index}`] !== undefined) {
+                    input.value = data[`number_${index}`];
+                }
+            });
+        }
+
+        function saveWorkout() {
+            const date = document.getElementById('workoutDate').value;
+            if (!date) {
+                alert('⚠️ Будь ласка, виберіть дату тренування!');
+                return;
+            }
+
+            const workoutData = getWorkoutData();
+            const allWorkouts = JSON.parse(localStorage.getItem('workoutHistory') || '{}');
+            
+            // Get current active workout day
+            const activeDay = document.querySelector('.workout-day.active')?.id || `day${currentActiveDay}`;
+            
+            if (!allWorkouts[date]) {
+                allWorkouts[date] = {};
+            }
+            
+            const activeTabText = document.querySelector('.workout-tab.active')?.textContent?.trim() || `День ${currentActiveDay}`;
+            
+            allWorkouts[date][activeDay] = {
+                data: workoutData,
+                timestamp: new Date().toISOString(),
+                workoutType: activeTabText
+            };
+            
+            localStorage.setItem('workoutHistory', JSON.stringify(allWorkouts));
+            alert(`✅ Тренування збережено для ${formatDate(date)}!`);
+        }
+
+        function loadWorkout() {
+            const date = document.getElementById('workoutDate').value;
+            if (!date) {
+                alert('⚠️ Будь ласка, виберіть дату для завантаження!');
+                return;
+            }
+
+            const allWorkouts = JSON.parse(localStorage.getItem('workoutHistory') || '{}');
+            const activeDay = document.querySelector('.workout-day.active')?.id || `day${currentActiveDay}`;
+            
+            if (allWorkouts[date] && allWorkouts[date][activeDay]) {
+                setWorkoutData(allWorkouts[date][activeDay].data);
+                alert(`📂 Тренування завантажено для ${formatDate(date)}!`);
+            } else {
+                alert(`❌ Не знайдено тренування для ${formatDate(date)}!`);
+            }
+        }
+
+        function showHistory() {
+            const allWorkouts = JSON.parse(localStorage.getItem('workoutHistory') || '{}');
+            const historyContent = document.getElementById('historyContent');
+            
+            if (Object.keys(allWorkouts).length === 0) {
+                historyContent.innerHTML = '<p class="text-gray-500 text-center py-8">📭 Історія тренувань порожня</p>';
+            } else {
+                let historyHTML = '';
+                
+                // Sort dates in descending order (newest first)
+                const sortedDates = Object.keys(allWorkouts).sort((a, b) => new Date(b) - new Date(a));
+                
+                sortedDates.forEach(date => {
+                    const dayWorkouts = allWorkouts[date];
+                    const workoutCount = Object.keys(dayWorkouts).length;
+                    
+                    historyHTML += `
+                        <div class="history-item bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-semibold text-gray-800">${formatDate(date)}</h3>
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">
+                                    ${workoutCount} тренування
+                                </span>
+                            </div>
+                            <div class="space-y-2">
+                    `;
+                    
+                    Object.keys(dayWorkouts).forEach(dayId => {
+                        const workout = dayWorkouts[dayId];
+                        const completedExercises = Object.values(workout.data).filter(val => val === true).length;
+                        const totalInputs = Object.values(workout.data).filter(val => val !== '' && val !== false).length;
+                        
+                        historyHTML += `
+                            <div class="flex justify-between items-center bg-white rounded p-3">
+                                <div>
+                                    <span class="font-medium text-gray-700">${workout.workoutType}</span>
+                                    <div class="text-sm text-gray-500">
+                                        ✅ ${completedExercises} виконано | 📊 ${totalInputs} записів
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="loadSpecificWorkout('${date}', '${dayId}')" 
+                                            class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
+                                        📂 Завантажити
+                                    </button>
+                                    <button onclick="deleteWorkout('${date}', '${dayId}')" 
+                                            class="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    historyHTML += `
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                historyContent.innerHTML = historyHTML;
+            }
+            
+            document.getElementById('historyModal').classList.remove('hidden');
+        }
+
+        function loadSpecificWorkout(date, dayId) {
+            const allWorkouts = JSON.parse(localStorage.getItem('workoutHistory') || '{}');
+            
+            if (allWorkouts[date] && allWorkouts[date][dayId]) {
+                // Switch to the correct day
+                const dayNumber = parseInt(dayId.replace('day', ''));
+                showWorkout(dayNumber);
+                
+                // Set the date
+                document.getElementById('workoutDate').value = date;
+                
+                // Load the data
+                setWorkoutData(allWorkouts[date][dayId].data);
+                
+                closeHistory();
+                alert(`📂 Тренування завантажено для ${formatDate(date)}!`);
+            }
+        }
+
+        function deleteWorkout(date, dayId) {
+            if (confirm('Ви впевнені, що хочете видалити це тренування?')) {
+                const allWorkouts = JSON.parse(localStorage.getItem('workoutHistory') || '{}');
+                
+                if (allWorkouts[date] && allWorkouts[date][dayId]) {
+                    delete allWorkouts[date][dayId];
+                    
+                    // If no more workouts for this date, delete the date entry
+                    if (Object.keys(allWorkouts[date]).length === 0) {
+                        delete allWorkouts[date];
+                    }
+                    
+                    localStorage.setItem('workoutHistory', JSON.stringify(allWorkouts));
+                    showHistory(); // Refresh the history view
+                    alert('🗑️ Тренування видалено!');
+                }
+            }
+        }
+
+        function closeHistory() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('uk-UA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // Initialize with default program
+        window.addEventListener('load', () => {
+            loadDefaultProgram();
+        });
+    </script>
+<script>window.parent.postMessage({ action: "ready" }, "*"); 
+ 
+window.console = new Proxy(console, {
+  get(target, prop) {
+    if (['log', 'warn', 'error'].includes(prop)) {
+      return new Proxy(target[prop], {
+        apply(fn, thisArg, args) {
+          fn.apply(thisArg, args);
+          window.parent.postMessage({ action: 'console', 
+            type: prop, 
+            args: args.map((arg) => {
+              try {
+                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
+              } catch (e) {
+                return arg;
+              }
+            }) 
+          }, '*');
+        }
+      });
+    }
+    return target[prop];
+  }
+});
+</script></body>
+</html>
