@@ -34,6 +34,9 @@
             border-color: #3b82f6;
             background-color: #eff6ff;
         }
+        .settings-tab.active {
+            @apply bg-blue-600 text-white;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -44,37 +47,145 @@
             <p class="text-gray-600">Відстежуйте свій прогрес та нічого не забувайте!</p>
         </div>
 
-        <!-- Program Management -->
+        <!-- Settings and Program Management -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">📁 Управління програмою тренувань</h2>
-            
-            <!-- File Upload Area -->
-            <div class="file-upload rounded-lg p-6 text-center mb-4" id="fileUpload">
-                <div class="space-y-3">
-                    <div class="text-4xl">📄</div>
-                    <div>
-                        <p class="text-gray-700 font-medium">Завантажте CSV файл з програмою тренувань</p>
-                        <p class="text-gray-500 text-sm">Перетягніть файл сюди або натисніть для вибору</p>
-                    </div>
-                    <input type="file" id="csvFileInput" accept=".csv" class="hidden">
-                    <button onclick="document.getElementById('csvFileInput').click()" 
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        Вибрати файл
+            <div class="flex justify-center mb-4">
+                <div class="flex bg-gray-100 rounded-lg p-1">
+                    <button class="settings-tab px-4 py-2 rounded-md transition-colors active" onclick="showSettingsTab('program')">
+                        📁 Програма
+                    </button>
+                    <button class="settings-tab px-4 py-2 rounded-md transition-colors" onclick="showSettingsTab('history')">
+                        📈 Історія
+                    </button>
+                    <button class="settings-tab px-4 py-2 rounded-md transition-colors" onclick="showSettingsTab('settings')">
+                        ⚙️ Налаштування
                     </button>
                 </div>
             </div>
-            
-            <!-- Control Buttons -->
-            <div class="flex flex-wrap gap-2 justify-center">
-                <button onclick="downloadDefaultCSV()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
-                    📥 Завантажити приклад CSV
-                </button>
-                <button onclick="loadDefaultProgram()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                    🔄 Стандартна програма
-                </button>
-                <button onclick="clearProgram()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                    🗑️ Очистити програму
-                </button>
+
+            <!-- Program Tab -->
+            <div id="programTab" class="settings-content">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">📁 Управління програмою тренувань</h2>
+                
+                <!-- File Upload Area -->
+                <div class="file-upload rounded-lg p-6 text-center mb-4" id="fileUpload">
+                    <div class="space-y-3">
+                        <div class="text-4xl">📄</div>
+                        <div>
+                            <p class="text-gray-700 font-medium">Завантажте CSV файл з програмою тренувань</p>
+                            <p class="text-gray-500 text-sm">Перетягніть файл сюди або натисніть для вибору</p>
+                        </div>
+                        <input type="file" id="csvFileInput" accept=".csv" class="hidden">
+                        <button onclick="document.getElementById('csvFileInput').click()" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Вибрати файл
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Control Buttons -->
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <button onclick="downloadDefaultCSV()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        📥 Завантажити приклад CSV
+                    </button>
+                    <button onclick="loadDefaultProgram()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        🔄 Стандартна програма
+                    </button>
+                    <button onclick="setAsDefaultProgram()" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                        ⭐ Зробити стандартною
+                    </button>
+                    <button onclick="clearProgram()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        🗑️ Очистити програму
+                    </button>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="historyTab" class="settings-content hidden">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">📈 Управління історією тренувань</h2>
+                
+                <!-- History Import Area -->
+                <div class="file-upload rounded-lg p-6 text-center mb-4" id="historyUpload">
+                    <div class="space-y-3">
+                        <div class="text-4xl">📊</div>
+                        <div>
+                            <p class="text-gray-700 font-medium">Завантажте JSON файл з історією тренувань</p>
+                            <p class="text-gray-500 text-sm">Перетягніть файл сюди або натисніть для вибору</p>
+                        </div>
+                        <input type="file" id="historyFileInput" accept=".json" class="hidden">
+                        <button onclick="document.getElementById('historyFileInput').click()" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Вибрати файл історії
+                        </button>
+                    </div>
+                </div>
+
+                <!-- History Controls -->
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <button onclick="exportHistoryJSON()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        📥 Експорт історії (JSON)
+                    </button>
+                    <button onclick="exportHistoryCSV()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        📊 Експорт історії (CSV)
+                    </button>
+                    <button onclick="showHistoryStats()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        📈 Статистика
+                    </button>
+                    <button onclick="clearAllHistory()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        🗑️ Очистити історію
+                    </button>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settingsTab" class="settings-content hidden">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">⚙️ Налаштування</h2>
+                
+                <div class="space-y-4">
+                    <!-- Default Program Setting -->
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <h3 class="font-semibold text-gray-700 mb-2">Стандартна програма тренувань</h3>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600" id="defaultProgramName">Заводська програма</span>
+                            <div class="flex gap-2">
+                                <button onclick="loadCustomDefaultProgram()" class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
+                                    📂 Завантажити
+                                </button>
+                                <button onclick="resetToFactoryDefault()" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600">
+                                    🔄 Заводська
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Auto-load Setting -->
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold text-gray-700">Автозавантаження стандартної програми</h3>
+                                <p class="text-sm text-gray-500">Завантажувати стандартну програму при відкритті додатка</p>
+                            </div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="autoLoadProgram" class="mr-2" checked>
+                                <span class="text-sm">Увімкнено</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Theme Setting (для майбутнього розширення) -->
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold text-gray-700">Дата за замовчуванням</h3>
+                                <p class="text-sm text-gray-500">Автоматично встановлювати сьогоднішню дату</p>
+                            </div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="autoSetDate" class="mr-2" checked>
+                                <span class="text-sm">Увімкнено</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -145,6 +256,23 @@
             </div>
         </div>
 
+        <!-- Statistics Modal -->
+        <div id="statsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+                    <div class="flex justify-between items-center p-6 border-b">
+                        <h2 class="text-2xl font-bold text-gray-800">📊 Статистика тренувань</h2>
+                        <button onclick="closeStats()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                    </div>
+                    <div class="p-6 overflow-y-auto max-h-[70vh]">
+                        <div id="statsContent">
+                            <!-- Stats content will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Footer -->
         <div class="text-center mt-8 text-gray-500">
             <p>💪 Успіхів у тренуваннях! Будьте послідовними та досягайте своїх цілей!</p>
@@ -155,8 +283,32 @@
         let currentProgram = null;
         let currentActiveDay = 1;
 
-        // Set today's date as default
-        document.getElementById('workoutDate').valueAsDate = new Date();
+        // Settings
+        function loadSettings() {
+            const autoLoadProgram = localStorage.getItem('autoLoadProgram') !== 'false';
+            const autoSetDate = localStorage.getItem('autoSetDate') !== 'false';
+            
+            document.getElementById('autoLoadProgram').checked = autoLoadProgram;
+            document.getElementById('autoSetDate').checked = autoSetDate;
+            
+            // Update default program name
+            const defaultProgramName = localStorage.getItem('defaultProgramName') || 'Заводська програма';
+            document.getElementById('defaultProgramName').textContent = defaultProgramName;
+            
+            // Set date if auto-set is enabled
+            if (autoSetDate) {
+                document.getElementById('workoutDate').valueAsDate = new Date();
+            }
+        }
+
+        function saveSettings() {
+            localStorage.setItem('autoLoadProgram', document.getElementById('autoLoadProgram').checked);
+            localStorage.setItem('autoSetDate', document.getElementById('autoSetDate').checked);
+        }
+
+        // Event listeners for settings
+        document.getElementById('autoLoadProgram').addEventListener('change', saveSettings);
+        document.getElementById('autoSetDate').addEventListener('change', saveSettings);
 
         // Default workout program data
         const defaultProgram = {
@@ -350,25 +502,57 @@
             ]
         };
 
+        // Settings tabs functionality
+        function showSettingsTab(tabName) {
+            // Hide all settings content
+            document.querySelectorAll('.settings-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.settings-tab').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show selected content and activate tab
+            document.getElementById(tabName + 'Tab').classList.remove('hidden');
+            event.target.classList.add('active');
+        }
+
         // File upload functionality
         document.getElementById('csvFileInput').addEventListener('change', handleFileSelect);
+        document.getElementById('historyFileInput').addEventListener('change', handleHistoryFileSelect);
         
         const fileUpload = document.getElementById('fileUpload');
         fileUpload.addEventListener('click', () => document.getElementById('csvFileInput').click());
         fileUpload.addEventListener('dragover', handleDragOver);
         fileUpload.addEventListener('drop', handleFileDrop);
 
+        const historyUpload = document.getElementById('historyUpload');
+        historyUpload.addEventListener('click', () => document.getElementById('historyFileInput').click());
+        historyUpload.addEventListener('dragover', handleDragOver);
+        historyUpload.addEventListener('drop', handleHistoryFileDrop);
+
         function handleDragOver(e) {
             e.preventDefault();
-            fileUpload.classList.add('dragover');
+            e.currentTarget.classList.add('dragover');
         }
 
         function handleFileDrop(e) {
             e.preventDefault();
-            fileUpload.classList.remove('dragover');
+            e.currentTarget.classList.remove('dragover');
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 processCSVFile(files[0]);
+            }
+        }
+
+        function handleHistoryFileDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processHistoryFile(files[0]);
             }
         }
 
@@ -377,6 +561,30 @@
             if (file) {
                 processCSVFile(file);
             }
+        }
+
+        function handleHistoryFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processHistoryFile(file);
+            }
+        }
+
+        function processHistoryFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const historyData = JSON.parse(e.target.result);
+                    
+                    if (confirm('Це замінить вашу поточну історію тренувань. Продовжити?')) {
+                        localStorage.setItem('workoutHistory', JSON.stringify(historyData));
+                        alert('✅ Історія тренувань успішно завантажена!');
+                    }
+                } catch (error) {
+                    alert('❌ Помилка при обробці файлу історії: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
         }
 
         function processCSVFile(file) {
@@ -597,6 +805,7 @@
             }).join('');
         }
 
+        // Program management functions
         function downloadDefaultCSV() {
             const csvContent = generateCSVFromProgram(defaultProgram);
             downloadCSV(csvContent, 'workout_program.csv');
@@ -659,6 +868,44 @@
             alert('✅ Стандартна програма завантажена!');
         }
 
+        function setAsDefaultProgram() {
+            if (!currentProgram) {
+                alert('⚠️ Спершу завантажте програму тренувань!');
+                return;
+            }
+
+            if (confirm('Встановити поточну програму як стандартну?')) {
+                localStorage.setItem('customDefaultProgram', JSON.stringify(currentProgram));
+                
+                // Get program name from first day or use generic name
+                const programName = currentProgram.days[0]?.name.split(':')[0] || 'Користувацька програма';
+                localStorage.setItem('defaultProgramName', programName);
+                
+                document.getElementById('defaultProgramName').textContent = programName;
+                alert('⭐ Програма встановлена як стандартна!');
+            }
+        }
+
+        function loadCustomDefaultProgram() {
+            const customProgram = localStorage.getItem('customDefaultProgram');
+            if (customProgram) {
+                currentProgram = JSON.parse(customProgram);
+                generateWorkoutProgram(currentProgram);
+                alert('✅ Користувацька стандартна програма завантажена!');
+            } else {
+                alert('❌ Не знайдено користувацької стандартної програми!');
+            }
+        }
+
+        function resetToFactoryDefault() {
+            if (confirm('Скинути до заводської стандартної програми?')) {
+                localStorage.removeItem('customDefaultProgram');
+                localStorage.setItem('defaultProgramName', 'Заводська програма');
+                document.getElementById('defaultProgramName').textContent = 'Заводська програма';
+                loadDefaultProgram();
+            }
+        }
+
         function clearProgram() {
             if (confirm('Ви впевнені, що хочете очистити поточну програму?')) {
                 document.getElementById('preWorkoutReminders').innerHTML = '';
@@ -668,6 +915,161 @@
                 currentProgram = null;
                 alert('🗑️ Програма очищена!');
             }
+        }
+
+        // History management functions
+        function exportHistoryJSON() {
+            const history = localStorage.getItem('workoutHistory') || '{}';
+            const blob = new Blob([history], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `workout_history_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            alert('📥 Історія експортована в JSON!');
+        }
+
+        function exportHistoryCSV() {
+            const allWorkouts = JSON.parse(localStorage.getItem('workoutHistory') || '{}');
+            
+            if (Object.keys(allWorkouts).length === 0) {
+                alert('❌ Історія тренувань порожня!');
+                return;
+            }
+
+            let csv = 'date,workout_day,workout_type,completed_exercises,total_inputs,timestamp\n';
+            
+            Object.keys(allWorkouts).forEach(date => {
+                const dayWorkouts = allWorkouts[date];
+                Object.keys(dayWorkouts).forEach(dayId => {
+                    const workout = dayWorkouts[dayId];
+                    const completedExercises = Object.values(workout.data).filter(val => val === true).length;
+                    const totalInputs = Object.values(workout.data).filter(val => val !== '' && val !== false).length;
+                    
+                    csv += `"${date}","${dayId}","${workout.workoutType}",${completedExercises},${totalInputs},"${workout.timestamp}"\n`;
+                });
+            });
+
+            downloadCSV(csv, `workout_history_${new Date().toISOString().split('T')[0]}.csv`);
+            alert('📊 Історія експортована в CSV!');
+        }
+
+        function clearAllHistory() {
+            if (confirm('Ви впевнені, що хочете видалити ВСЮ історію тренувань? Цю дію неможливо скасувати!')) {
+                if (confirm('ОСТАННЯ ПЕРЕВІРКА: Ви дійсно хочете видалити всю історію?')) {
+                    localStorage.removeItem('workoutHistory');
+                    alert('🗑️ Вся історія тренувань видалена!');
+                }
+            }
+        }
+
+        function showHistoryStats() {
+            const allWorkouts = JSON.parse(localStorage.getItem('workoutHistory') || '{}');
+            
+            if (Object.keys(allWorkouts).length === 0) {
+                alert('❌ Історія тренувань порожня!');
+                return;
+            }
+
+            // Calculate statistics
+            let totalWorkouts = 0;
+            let totalCompletedExercises = 0;
+            let totalInputs = 0;
+            const workoutsByMonth = {};
+            const workoutsByType = {};
+            
+            let firstWorkout = null;
+            let lastWorkout = null;
+
+            Object.keys(allWorkouts).forEach(date => {
+                const dayWorkouts = allWorkouts[date];
+                Object.keys(dayWorkouts).forEach(dayId => {
+                    const workout = dayWorkouts[dayId];
+                    totalWorkouts++;
+                    
+                    const completedExercises = Object.values(workout.data).filter(val => val === true).length;
+                    const inputs = Object.values(workout.data).filter(val => val !== '' && val !== false).length;
+                    
+                    totalCompletedExercises += completedExercises;
+                    totalInputs += inputs;
+                    
+                    // By month
+                    const month = date.substring(0, 7);
+                    workoutsByMonth[month] = (workoutsByMonth[month] || 0) + 1;
+                    
+                    // By type
+                    const type = workout.workoutType;
+                    workoutsByType[type] = (workoutsByType[type] || 0) + 1;
+                    
+                    // First and last workout
+                    if (!firstWorkout || date < firstWorkout) firstWorkout = date;
+                    if (!lastWorkout || date > lastWorkout) lastWorkout = date;
+                });
+            });
+
+            const avgExercisesPerWorkout = (totalCompletedExercises / totalWorkouts).toFixed(1);
+            const avgInputsPerWorkout = (totalInputs / totalWorkouts).toFixed(1);
+
+            // Generate stats HTML
+            const statsHTML = `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-blue-800">📊 Загальна статистика</h3>
+                            <div class="mt-2 space-y-1 text-sm">
+                                <p>Всього тренувань: <strong>${totalWorkouts}</strong></p>
+                                <p>Виконано вправ: <strong>${totalCompletedExercises}</strong></p>
+                                <p>Всього записів: <strong>${totalInputs}</strong></p>
+                                <p>Середньо вправ за тренування: <strong>${avgExercisesPerWorkout}</strong></p>
+                                <p>Середньо записів за тренування: <strong>${avgInputsPerWorkout}</strong></p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-green-800">📅 Період тренувань</h3>
+                            <div class="mt-2 space-y-1 text-sm">
+                                <p>Перше тренування: <strong>${formatDate(firstWorkout)}</strong></p>
+                                <p>Останнє тренування: <strong>${formatDate(lastWorkout)}</strong></p>
+                                <p>Днів з тренуваннями: <strong>${Object.keys(allWorkouts).length}</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-purple-800 mb-3">🏋️ Тренування за типами</h3>
+                        <div class="space-y-2">
+                            ${Object.entries(workoutsByType).map(([type, count]) => `
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm">${type}</span>
+                                    <span class="font-semibold">${count} тренувань</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-yellow-800 mb-3">📈 Активність за місяцями</h3>
+                        <div class="space-y-2">
+                            ${Object.entries(workoutsByMonth).sort().reverse().map(([month, count]) => `
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm">${month}</span>
+                                    <span class="font-semibold">${count} тренувань</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('statsContent').innerHTML = statsHTML;
+            document.getElementById('statsModal').classList.remove('hidden');
+        }
+
+        function closeStats() {
+            document.getElementById('statsModal').classList.add('hidden');
         }
 
         function showWorkout(day) {
@@ -891,34 +1293,24 @@
             });
         }
 
-        // Initialize with default program
+        // Initialize app
         window.addEventListener('load', () => {
-            loadDefaultProgram();
+            loadSettings();
+            
+            const autoLoadProgram = localStorage.getItem('autoLoadProgram') !== 'false';
+            if (autoLoadProgram) {
+                const customProgram = localStorage.getItem('customDefaultProgram');
+                if (customProgram) {
+                    try {
+                        currentProgram = JSON.parse(customProgram);
+                        generateWorkoutProgram(currentProgram);
+                    } catch (e) {
+                        loadDefaultProgram();
+                    }
+                } else {
+                    loadDefaultProgram();
+                }
+            }
         });
     </script>
-<script>window.parent.postMessage({ action: "ready" }, "*"); 
- 
-window.console = new Proxy(console, {
-  get(target, prop) {
-    if (['log', 'warn', 'error'].includes(prop)) {
-      return new Proxy(target[prop], {
-        apply(fn, thisArg, args) {
-          fn.apply(thisArg, args);
-          window.parent.postMessage({ action: 'console', 
-            type: prop, 
-            args: args.map((arg) => {
-              try {
-                return JSON.stringify(arg).replace(/^["']|["']$/g, '');
-              } catch (e) {
-                return arg;
-              }
-            }) 
-          }, '*');
-        }
-      });
-    }
-    return target[prop];
-  }
-});
-</script></body>
-</html>
+</body>
